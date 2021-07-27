@@ -33,7 +33,6 @@ namespace SampleFunc
         }
 
         [FunctionName("SampleFunc")]
-        [RequiredScope("access_as_user")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req)
         {
@@ -41,8 +40,11 @@ namespace SampleFunc
 
             var (authenticationStatus, authenticationResponse) =
                 await req.HttpContext.AuthenticateAzureFunctionAsync();
-            if (!authenticationStatus)
+            if (!authenticationStatus) {
                 return authenticationResponse;
+            }
+            req.HttpContext.VerifyUserHasAnyAcceptedScope(new string[] { "access_as_user" });
+
 
             using var response = await _downstreamWebApi.CallWebApiForUserAsync("DownstreamApi").ConfigureAwait(false);
 
